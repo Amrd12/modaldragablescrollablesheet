@@ -13,6 +13,26 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late DraggableScrollableController _controller;
+  double height = 0.0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    _controller = DraggableScrollableController();
+    _controller.addListener(changeSize);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.jumpTo(.3);
+    });
+    super.initState();
+  }
+
+  void changeSize() {
+    setState(() {
+      height = _controller.size;
+    });
+    // log(height.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,31 +42,36 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
           child: ModalDraggableScrollableSheet(
-            screen: Container(
-              color: Colors.green,
-              height: double.maxFinite,
-              width: double.maxFinite,
-            ), // Main screen widget above the bottom sheet
-            scrollScreen: (context, scrollController) => ListView.builder(
-              controller: scrollController,
-              itemCount: 100,
-              itemBuilder: (context, index) => ListTile(
-                title: Text('Item $index'),
-              ),
-            ),
-            maxSize: 0.9,
-            minSize: 0.1,
-            initSize: 0.5,
+            scrollController: _controller,
+            screen: _screen(), // Main screen widget above the bottom sheet
+            scrollScreen: (context, scrollController) =>
+                _scrollScreen(scrollController),
             borderRadius: BorderRadius.circular(20),
             decoration: const BoxDecoration(
               color: Colors.red,
               boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
             ),
-            // onSizeChanged: (size) => print('Sheet size: $size'),
-            // onSheetClosed: () => print('Sheet closed!'),
           ),
         ),
       ),
+    );
+  }
+
+  ListView _scrollScreen(ScrollController scrollController) {
+    return ListView.builder(
+      controller: scrollController,
+      itemCount: 100,
+      itemBuilder: (context, index) => ListTile(
+        title: Text('Item $index'),
+      ),
+    );
+  }
+
+  Container _screen() {
+    return Container(
+      color: Colors.green,
+      height: double.maxFinite,
+      width: double.maxFinite,
     );
   }
 }

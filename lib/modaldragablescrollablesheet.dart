@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 part 'custom_bottom_sheet.dart';
 
-class ModalDraggableScrollableSheet extends StatefulWidget {
+class ModalDraggableScrollableSheet extends StatelessWidget {
   const ModalDraggableScrollableSheet({
     super.key,
     required this.screen,
     required this.scrollScreen,
+    required this.scrollController, // Added controller parameter
     this.maxSize = 1.0, // Max height when fully expanded
     this.minSize = 0.1, // Min height when collapsed
     this.initSize = 0.5, // Initial height
@@ -17,13 +18,13 @@ class ModalDraggableScrollableSheet extends StatefulWidget {
     this.decoration,
     this.padding, // Custom padding if needed
     this.margin, // Custom margin if needed
-    this.onSizeChanged, // Callback when size changes
-    this.onSheetClosed, // Callback when the bottom sheet is closed
   });
 
   final Widget screen;
   final Widget Function(BuildContext context, ScrollController scrollController)
       scrollScreen;
+  final DraggableScrollableController
+      scrollController; // Changed to accept controller
   final double maxSize;
   final double minSize;
   final double initSize;
@@ -33,76 +34,32 @@ class ModalDraggableScrollableSheet extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
 
-  // Optional callbacks for more flexibility
-  final void Function(double size)? onSizeChanged;
-  final VoidCallback? onSheetClosed;
-
-  @override
-  State<ModalDraggableScrollableSheet> createState() =>
-      _ModalDraggableScrollableSheetState();
-}
-
-class _ModalDraggableScrollableSheetState
-    extends State<ModalDraggableScrollableSheet> {
-  late DraggableScrollableController _controller;
-  double height = 0.0;
-  double get screenHeight => MediaQuery.of(context).size.height;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = DraggableScrollableController();
-    _controller.addListener(_handleSizeChange);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _controller.jumpTo(widget.initSize); // Set the initial position
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_handleSizeChange);
-    super.dispose();
-  }
-
-  void _handleSizeChange() {
-    final newSize = _controller.size;
-    setState(() {
-      height = newSize;
-    });
-
-    if (widget.onSizeChanged != null) {
-      widget.onSizeChanged!(newSize); // Trigger the size change callback
-    }
-
-    if (newSize == widget.minSize && widget.onSheetClosed != null) {
-      widget.onSheetClosed!(); // Trigger sheet closed callback
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    double height = scrollController.size;
+    double screenHeight = MediaQuery.of(context).size.height;
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
         Column(
           children: [
-            Flexible(child: widget.screen),
+            screen,
             SizedBox(
               height: height * screenHeight,
             )
           ],
         ),
         _CustomBottomSheet(
-          scrollController: _controller,
-          maxSize: widget.maxSize,
-          minSize: widget.minSize,
-          initSize: widget.initSize,
-          borderRadius: widget.borderRadius,
-          bgcolor: widget.bgcolor,
-          decoration: widget.decoration,
-          padding: widget.padding,
-          margin: widget.margin,
-          screen: widget.scrollScreen,
+          scrollController: scrollController,
+          maxSize: maxSize,
+          minSize: minSize,
+          initSize: initSize,
+          borderRadius: borderRadius,
+          bgcolor: bgcolor,
+          decoration: decoration,
+          padding: padding,
+          margin: margin,
+          screen: scrollScreen,
         ),
       ],
     );
